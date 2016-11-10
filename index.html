@@ -32,15 +32,17 @@
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
         <h1>
-<a id="leaflet-wfst" class="anchor" href="#leaflet-wfst" aria-hidden="true"><span class="octicon octicon-link"></span></a>Leaflet-WFST</h1>
+<a id="leaflet-wfst" class="anchor" href="#leaflet-wfst" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Leaflet-WFST</h1>
+
+<p><a href="https://travis-ci.org/Flexberry/Leaflet-WFST"><img src="https://travis-ci.org/Flexberry/Leaflet-WFST.svg?branch=master" alt="Build Status"></a></p>
 
 <p>OGC WFS-T client layer for leaflet.</p>
 
 <h1>
-<a id="initialization-options" class="anchor" href="#initialization-options" aria-hidden="true"><span class="octicon octicon-link"></span></a>Initialization options</h1>
+<a id="initialization-options" class="anchor" href="#initialization-options" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Initialization options</h1>
 
-<div class="highlight highlight-javascript"><pre>   options<span class="pl-k">:</span> {
-        crs<span class="pl-k">:</span> L.CRS.EPSG3857,
+<div class="highlight highlight-source-js"><pre>   options<span class="pl-k">:</span> {
+        crs<span class="pl-k">:</span> <span class="pl-c1">L</span>.<span class="pl-c1">CRS</span>.<span class="pl-c1">EPSG3857</span>,
         showExisting<span class="pl-k">:</span> <span class="pl-c1">true</span>,
         geometryField<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>Shape<span class="pl-pds">'</span></span>,
         url<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span><span class="pl-pds">'</span></span>,
@@ -95,35 +97,56 @@
 <td>type name</td>
 </tr>
 <tr>
+<td>typeNSName</td>
+<td>-</td>
+<td>type namespace name</td>
+</tr>
+<tr>
+<td>namespaceUri</td>
+<td>-</td>
+<td>namespace URI</td>
+</tr>
+<tr>
 <td>style</td>
 <td>-</td>
 <td>leaflet vector style</td>
+</tr>
+<tr>
+<td>filter</td>
+<td>-</td>
+<td>any filter. see <a href="#filter">filter</a>
+</td>
+</tr>
+<tr>
+<td>maxFeatures</td>
+<td>-</td>
+<td>limit the amount of features returned</td>
 </tr>
 </tbody>
 </table>
 
 <h1>
-<a id="basic-wfs-example---view" class="anchor" href="#basic-wfs-example---view" aria-hidden="true"><span class="octicon octicon-link"></span></a>Basic WFS example - <a href="http://flexberry.github.io/Leaflet-WFST/examples/tasmania.html">view</a>
+<a id="basic-wfs-example---view" class="anchor" href="#basic-wfs-example---view" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Basic WFS example - <a href="http://flexberry.github.io/Leaflet-WFST/examples/tasmania.html">view</a>
 </h1>
 
-<div class="highlight highlight-javascript"><pre><span class="pl-k">var</span> map <span class="pl-k">=</span> L.map(<span class="pl-s"><span class="pl-pds">'</span>map<span class="pl-pds">'</span></span>).setView([<span class="pl-c1">0</span>, <span class="pl-c1">0</span>], <span class="pl-c1">2</span>);
+<div class="highlight highlight-source-js"><pre><span class="pl-k">var</span> map <span class="pl-k">=</span> <span class="pl-c1">L</span>.<span class="pl-en">map</span>(<span class="pl-s"><span class="pl-pds">'</span>map<span class="pl-pds">'</span></span>).<span class="pl-en">setView</span>([<span class="pl-c1">0</span>, <span class="pl-c1">0</span>], <span class="pl-c1">2</span>);
 
 <span class="pl-k">var</span> boundaries <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">L.WFS</span>({
     url<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>http://demo.opengeo.org/geoserver/ows<span class="pl-pds">'</span></span>,
     typeNS<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>topp<span class="pl-pds">'</span></span>,
     typeName<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>tasmania_state_boundaries<span class="pl-pds">'</span></span>,
-    crs<span class="pl-k">:</span> L.CRS.EPSG4326,
+    crs<span class="pl-k">:</span> <span class="pl-c1">L</span>.<span class="pl-c1">CRS</span>.<span class="pl-c1">EPSG4326</span>,
     style<span class="pl-k">:</span> {
         color<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>blue<span class="pl-pds">'</span></span>,
         weight<span class="pl-k">:</span> <span class="pl-c1">2</span>
     }
-}).addTo(map)
-        .on(<span class="pl-s"><span class="pl-pds">'</span>load<span class="pl-pds">'</span></span>, <span class="pl-k">function</span> () {
-            map.fitBounds(boundaries);
+}).<span class="pl-en">addTo</span>(map)
+        .<span class="pl-en">on</span>(<span class="pl-s"><span class="pl-pds">'</span>load<span class="pl-pds">'</span></span>, <span class="pl-k">function</span> () {
+            <span class="pl-smi">map</span>.<span class="pl-en">fitBounds</span>(boundaries);
         })</pre></div>
 
 <h1>
-<a id="methods" class="anchor" href="#methods" aria-hidden="true"><span class="octicon octicon-link"></span></a>Methods</h1>
+<a id="methods" class="anchor" href="#methods" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Methods</h1>
 
 <p>Extends leaflet classes with toGml(crs) function:</p>
 
@@ -133,36 +156,130 @@
 <li>L.Polyline</li>
 <li>L.MultiPolygon</li>
 <li>L.MultiPolyline</li>
+<li>L.LatLngBounds</li>
+</ul>
+
+<h1>
+<a id="events" class="anchor" href="#events" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Events</h1>
+
+<p>Triggers two type of events:</p>
+
+<ul>
+<li>load - triggers when both 'DescribeFeatureType' &amp; 'GetFeature' requests succeed, and features have been successfully parsed into leaflet layers</li>
+<li>error - triggers when any 'DescribeFeatureType' or 'GetFeature' request fails, and features haven't been parsed into leaflet layers</li>
 </ul>
 
 <p>Markers geometry writes as posNode, for all other layers geometry writes as posList</p>
 
 <h1>
-<a id="filter" class="anchor" href="#filter" aria-hidden="true"><span class="octicon octicon-link"></span></a>Filter</h1>
+<a id="filter" class="anchor" href="#filter" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Filter</h1>
 
 <p>OGC Filter realization:</p>
 
 <h2>
-<a id="gmlobjectid-filter" class="anchor" href="#gmlobjectid-filter" aria-hidden="true"><span class="octicon octicon-link"></span></a>GmlObjectId filter</h2>
+<a id="gmlobjectid-filter" class="anchor" href="#gmlobjectid-filter" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>GmlObjectID filter</h2>
 
 <p>Example:</p>
 
-<div class="highlight highlight-javascript"><pre><span class="pl-k">var</span> filter <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">L.Filter</span>.GmlObjectId();
-filter.append(<span class="pl-c1">1</span>);
-filter.toGml()</pre></div>
+<div class="highlight highlight-source-js"><pre>  <span class="pl-k">var</span> filter <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">L.Filter.GmlObjectID</span>().<span class="pl-c1">append</span>(<span class="pl-c1">1</span>);
+  <span class="pl-smi">filter</span>.<span class="pl-en">toGml</span>()</pre></div>
 
-<p>code above will return:</p>
+<p>code above will return xml:</p>
 
-<div class="highlight highlight-xml"><pre>&lt;<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">Filter</span>&gt;
-    &lt;<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">GmlObjectId</span> <span class="pl-e">gml</span><span class="pl-e">:</span><span class="pl-e">id</span>=1/&gt;
-&lt;/<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">Filter</span>&gt;</pre></div>
+<div class="highlight highlight-text-xml"><pre>  &lt;<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">Filter</span> <span class="pl-e">xmlns</span><span class="pl-e">:</span><span class="pl-e">ogc</span>=<span class="pl-s"><span class="pl-pds">"</span>http://www.opengis.net/ogc<span class="pl-pds">"</span></span>&gt;
+    &lt;<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">GmlObjectId</span> <span class="pl-e">xmlns</span><span class="pl-e">:</span><span class="pl-e">gml</span>=<span class="pl-s"><span class="pl-pds">"</span>http://www.opengis.net/gml<span class="pl-pds">"</span></span> <span class="pl-e">gml</span><span class="pl-e">:</span><span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>1<span class="pl-pds">"</span></span> /&gt;
+  &lt;/<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">Filter</span>&gt;</pre></div>
+
+<p>to load feature by id pass filter to WFS-layer options:</p>
+
+<div class="highlight highlight-source-js"><pre>  <span class="pl-k">var</span> wfs <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">L.WFS</span>({
+    filter<span class="pl-k">:</span> <span class="pl-k">new</span> <span class="pl-en">L.Filter.GmlObjectID</span>().<span class="pl-c1">append</span>(<span class="pl-c1">1</span>)
+  });</pre></div>
+
+<h2>
+<a id="eq-filter" class="anchor" href="#eq-filter" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>EQ filter</h2>
+
+<p>Example:</p>
+
+<div class="highlight highlight-source-js"><pre>  <span class="pl-k">var</span> filter <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">L.Filter.EQ</span>().<span class="pl-c1">append</span>(<span class="pl-s"><span class="pl-pds">'</span>city<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>Perm<span class="pl-pds">'</span></span>);
+  <span class="pl-smi">filter</span>.<span class="pl-en">toGml</span>()</pre></div>
+
+<p>code above will return xml:</p>
+
+<div class="highlight highlight-text-xml"><pre>  &lt;<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">Filter</span> <span class="pl-e">xmlns</span><span class="pl-e">:</span><span class="pl-e">ogc</span>=<span class="pl-s"><span class="pl-pds">"</span>http://www.opengis.net/ogc<span class="pl-pds">"</span></span>&gt;
+    &lt;<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">PropertyIsEqualTo</span>&gt;
+      &lt;<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">PropertyName</span>&gt;city&lt;/<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">PropertyName</span>&gt;
+      &lt;<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">Literal</span>&gt;Perm&lt;/<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">Literal</span>&gt;
+    &lt;/<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">PropertyIsEqualTo</span>&gt;
+  &lt;/<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">Filter</span>&gt;</pre></div>
+
+<p>to load features by some property equality to the specified value pass filter to WFS-layer options:</p>
+
+<div class="highlight highlight-source-js"><pre>  <span class="pl-k">var</span> wfs <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">L.WFS</span>({
+    filter<span class="pl-k">:</span> <span class="pl-k">new</span> <span class="pl-en">L.Filter.EQ</span>().<span class="pl-c1">append</span>(<span class="pl-s"><span class="pl-pds">'</span>city<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>Perm<span class="pl-pds">'</span></span>)
+  });</pre></div>
+
+<h2>
+<a id="bbox-filter" class="anchor" href="#bbox-filter" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>BBox filter</h2>
+
+<p>Example:</p>
+
+<div class="highlight highlight-source-js"><pre>    <span class="pl-k">var</span> filter <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">L.Filter.BBox</span>().<span class="pl-c1">append</span>(<span class="pl-c1">L</span>.<span class="pl-en">latLngBounds</span>(<span class="pl-c1">L</span>.<span class="pl-en">latLng</span>(<span class="pl-c1">40.712</span>, <span class="pl-k">-</span><span class="pl-c1">74.227</span>), <span class="pl-c1">L</span>.<span class="pl-en">latLng</span>(<span class="pl-c1">40.774</span>, <span class="pl-k">-</span><span class="pl-c1">74.125</span>)), <span class="pl-s"><span class="pl-pds">'</span>ogr_geometry<span class="pl-pds">'</span></span>, <span class="pl-c1">L</span>.<span class="pl-c1">CRS</span>.<span class="pl-c1">EPSG4326</span>);
+    <span class="pl-smi">filter</span>.<span class="pl-en">toGml</span>()</pre></div>
+
+<p>code above will return xml:</p>
+
+<div class="highlight highlight-text-xml"><pre>  &lt;<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">Filter</span> <span class="pl-e">xmlns</span><span class="pl-e">:</span><span class="pl-e">ogc</span>=<span class="pl-s"><span class="pl-pds">"</span>http://www.opengis.net/ogc<span class="pl-pds">"</span></span>&gt;
+    &lt;<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">BBOX</span>&gt;
+      &lt;<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">PropertyName</span>&gt;ogr_geometry&lt;/<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">PropertyName</span>&gt;
+      &lt;<span class="pl-ent">gml</span><span class="pl-ent">:</span><span class="pl-ent">Envelope</span> <span class="pl-e">xmlns</span><span class="pl-e">:</span><span class="pl-e">gml</span>=<span class="pl-s"><span class="pl-pds">"</span>http://www.opengis.net/gml<span class="pl-pds">"</span></span> <span class="pl-e">srsName</span>=<span class="pl-s"><span class="pl-pds">"</span>EPSG:4326<span class="pl-pds">"</span></span>&gt;
+        &lt;<span class="pl-ent">gml</span><span class="pl-ent">:</span><span class="pl-ent">lowerCorner</span>&gt;-74.227 40.712&lt;/<span class="pl-ent">gml</span><span class="pl-ent">:</span><span class="pl-ent">lowerCorner</span>&gt;
+        &lt;<span class="pl-ent">gml</span><span class="pl-ent">:</span><span class="pl-ent">upperCorner</span>&gt;-74.125 40.774&lt;/<span class="pl-ent">gml</span><span class="pl-ent">:</span><span class="pl-ent">upperCorner</span>&gt;
+      &lt;/<span class="pl-ent">gml</span><span class="pl-ent">:</span><span class="pl-ent">Envelope</span>&gt;
+    &lt;/<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">BBOX</span>&gt;
+  &lt;/<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">Filter</span>&gt;</pre></div>
+
+<p>to load features by bbox pass filter to WFS-layer options:</p>
+
+<div class="highlight highlight-source-js"><pre>  <span class="pl-k">var</span> wfs <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">L.WFS</span>({
+    filter<span class="pl-k">:</span> <span class="pl-k">new</span> <span class="pl-en">L.Filter.BBox</span>().<span class="pl-c1">append</span>(<span class="pl-c1">L</span>.<span class="pl-en">latLngBounds</span>(<span class="pl-c1">L</span>.<span class="pl-en">latLng</span>(<span class="pl-c1">40.712</span>, <span class="pl-k">-</span><span class="pl-c1">74.227</span>), <span class="pl-c1">L</span>.<span class="pl-en">latLng</span>(<span class="pl-c1">40.774</span>, <span class="pl-k">-</span><span class="pl-c1">74.125</span>)), <span class="pl-s"><span class="pl-pds">'</span>ogr_geometry<span class="pl-pds">'</span></span>, <span class="pl-c1">L</span>.<span class="pl-c1">CRS</span>.<span class="pl-c1">EPSG4326</span>)
+  });</pre></div>
+
+<h2>
+<a id="intersects-filter" class="anchor" href="#intersects-filter" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Intersects filter</h2>
+
+<p>Example:</p>
+
+<div class="highlight highlight-source-js"><pre>  <span class="pl-k">var</span> filter <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">L.Filter.Intersects</span>().<span class="pl-c1">append</span>(<span class="pl-c1">L</span>.<span class="pl-en">polygon</span>([<span class="pl-c1">L</span>.<span class="pl-en">latLng</span>(<span class="pl-c1">40.712</span>, <span class="pl-k">-</span><span class="pl-c1">74.227</span>), <span class="pl-c1">L</span>.<span class="pl-en">latLng</span>(<span class="pl-c1">40.774</span>, <span class="pl-k">-</span><span class="pl-c1">74.125</span>), <span class="pl-c1">L</span>.<span class="pl-en">latLng</span>(<span class="pl-c1">40.734</span>, <span class="pl-k">-</span><span class="pl-c1">74.175</span>)]), <span class="pl-s"><span class="pl-pds">'</span>ogr_geometry<span class="pl-pds">'</span></span>, <span class="pl-c1">L</span>.<span class="pl-c1">CRS</span>.<span class="pl-c1">EPSG4326</span>);
+  <span class="pl-smi">filter</span>.<span class="pl-en">toGml</span>();</pre></div>
+
+<p>code above will return xml:</p>
+
+<div class="highlight highlight-text-xml"><pre>  &lt;<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">Filter</span> <span class="pl-e">xmlns</span><span class="pl-e">:</span><span class="pl-e">ogc</span>=<span class="pl-s"><span class="pl-pds">"</span>http://www.opengis.net/ogc<span class="pl-pds">"</span></span>&gt;
+    &lt;<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">Intersects</span>&gt;
+      &lt;<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">PropertyName</span>&gt;ogr_geometry&lt;/<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">PropertyName</span>&gt;
+      &lt;<span class="pl-ent">gml</span><span class="pl-ent">:</span><span class="pl-ent">Polygon</span> <span class="pl-e">xmlns</span><span class="pl-e">:</span><span class="pl-e">gml</span>=<span class="pl-s"><span class="pl-pds">"</span>http://www.opengis.net/gml<span class="pl-pds">"</span></span> <span class="pl-e">srsName</span>=<span class="pl-s"><span class="pl-pds">"</span>EPSG:4326<span class="pl-pds">"</span></span> <span class="pl-e">srsDimension</span>=<span class="pl-s"><span class="pl-pds">"</span>2<span class="pl-pds">"</span></span>&gt;
+        &lt;<span class="pl-ent">gml</span><span class="pl-ent">:</span><span class="pl-ent">exterior</span>&gt;
+          &lt;<span class="pl-ent">gml</span><span class="pl-ent">:</span><span class="pl-ent">LinearRing</span> <span class="pl-e">srsDimension</span>=<span class="pl-s"><span class="pl-pds">"</span>2<span class="pl-pds">"</span></span>&gt;
+            &lt;<span class="pl-ent">gml</span><span class="pl-ent">:</span><span class="pl-ent">posList</span>&gt;-74.227 40.712 -74.125 40.774 -74.175 40.734 -74.227 40.712&lt;/<span class="pl-ent">gml</span><span class="pl-ent">:</span><span class="pl-ent">posList</span>&gt;
+          &lt;/<span class="pl-ent">gml</span><span class="pl-ent">:</span><span class="pl-ent">LinearRing</span>&gt;
+        &lt;/<span class="pl-ent">gml</span><span class="pl-ent">:</span><span class="pl-ent">exterior</span>&gt;
+      &lt;/<span class="pl-ent">gml</span><span class="pl-ent">:</span><span class="pl-ent">Polygon</span>&gt;
+    &lt;/<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">Intersects</span>&gt;
+  &lt;/<span class="pl-ent">ogc</span><span class="pl-ent">:</span><span class="pl-ent">Filter</span>&gt;</pre></div>
+
+<p>to load features by intersection with the specified geometry pass filter to WFS-layer options:</p>
+
+<div class="highlight highlight-source-js"><pre>  <span class="pl-k">var</span> wfs <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">L.WFS</span>({
+    filter<span class="pl-k">:</span> <span class="pl-k">new</span> <span class="pl-en">L.Filter.Intersects</span>().<span class="pl-c1">append</span>(<span class="pl-c1">L</span>.<span class="pl-en">polygon</span>([<span class="pl-c1">L</span>.<span class="pl-en">latLng</span>(<span class="pl-c1">40.712</span>, <span class="pl-k">-</span><span class="pl-c1">74.227</span>), <span class="pl-c1">L</span>.<span class="pl-en">latLng</span>(<span class="pl-c1">40.774</span>, <span class="pl-k">-</span><span class="pl-c1">74.125</span>), <span class="pl-c1">L</span>.<span class="pl-en">latLng</span>(<span class="pl-c1">40.734</span>, <span class="pl-k">-</span><span class="pl-c1">74.175</span>)]), <span class="pl-s"><span class="pl-pds">'</span>ogr_geometry<span class="pl-pds">'</span></span>, <span class="pl-c1">L</span>.<span class="pl-c1">CRS</span>.<span class="pl-c1">EPSG4326</span>)
+  });</pre></div>
 
 <h1>
-<a id="wfst-example" class="anchor" href="#wfst-example" aria-hidden="true"><span class="octicon octicon-link"></span></a>WFST Example</h1>
+<a id="wfst-example" class="anchor" href="#wfst-example" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>WFST Example</h1>
 
 <p>Editing plugin - <a href="https://github.com/yohanboniface/Leaflet.Editable">Leaflet.Editable</a></p>
 
-<div class="highlight highlight-javascript"><pre>L.WFST.include(MultiEditableMixin);
+<div class="highlight highlight-source-js"><pre><span class="pl-c1">L</span>.<span class="pl-c1">WFST</span>.<span class="pl-en">include</span>(MultiEditableMixin);
 
 <span class="pl-k">var</span> wfst <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">L.WFST</span>({
     url<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>http://myserver/geoserver/ows<span class="pl-pds">'</span></span>,
@@ -172,27 +289,57 @@ filter.toGml()</pre></div>
         color<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>blue<span class="pl-pds">'</span></span>,
         weight<span class="pl-k">:</span> <span class="pl-c1">2</span>
     }
-}).addTo(map).once(<span class="pl-s"><span class="pl-pds">'</span>load<span class="pl-pds">'</span></span>, <span class="pl-k">function</span> () {
-            map.fitBounds(wfst);
-            wfst.enableEdit();
+}).<span class="pl-en">addTo</span>(map).<span class="pl-en">once</span>(<span class="pl-s"><span class="pl-pds">'</span>load<span class="pl-pds">'</span></span>, <span class="pl-k">function</span> () {
+            <span class="pl-smi">map</span>.<span class="pl-en">fitBounds</span>(wfst);
+            <span class="pl-smi">wfst</span>.<span class="pl-en">enableEdit</span>();
         });
 
-map.on(<span class="pl-s"><span class="pl-pds">'</span>editable:created<span class="pl-pds">'</span></span>, <span class="pl-k">function</span> (<span class="pl-smi">e</span>) {
-    wfst.addLayer(e.layer);
+<span class="pl-smi">map</span>.<span class="pl-en">on</span>(<span class="pl-s"><span class="pl-pds">'</span>editable:created<span class="pl-pds">'</span></span>, <span class="pl-k">function</span> (<span class="pl-smi">e</span>) {
+    <span class="pl-smi">wfst</span>.<span class="pl-en">addLayer</span>(<span class="pl-smi">e</span>.<span class="pl-smi">layer</span>);
 });
 
-map.on(<span class="pl-s"><span class="pl-pds">'</span>editable:editing<span class="pl-pds">'</span></span>, <span class="pl-k">function</span> (<span class="pl-smi">e</span>) {
-    wfst.editLayer(e.layer);
+<span class="pl-smi">map</span>.<span class="pl-en">on</span>(<span class="pl-s"><span class="pl-pds">'</span>editable:editing<span class="pl-pds">'</span></span>, <span class="pl-k">function</span> (<span class="pl-smi">e</span>) {
+    <span class="pl-smi">wfst</span>.<span class="pl-en">editLayer</span>(<span class="pl-smi">e</span>.<span class="pl-smi">layer</span>);
 });</pre></div>
 
 <p>to make "wfs:Transaction" POST request call save() method, example with <a href="https://github.com/CliffCloud/Leaflet.EasyButton">Leaflet.EasyButton</a></p>
 
-<div class="highlight highlight-javascript"><pre> L.easyButton(<span class="pl-s"><span class="pl-pds">'</span>fa-save<span class="pl-pds">'</span></span>, <span class="pl-k">function</span> () {
-     wfst.save();
+<div class="highlight highlight-source-js"><pre> <span class="pl-c1">L</span>.<span class="pl-en">easyButton</span>(<span class="pl-s"><span class="pl-pds">'</span>fa-save<span class="pl-pds">'</span></span>, <span class="pl-k">function</span> () {
+     <span class="pl-smi">wfst</span>.<span class="pl-en">save</span>();
  }, <span class="pl-s"><span class="pl-pds">'</span>Save changes<span class="pl-pds">'</span></span>);</pre></div>
 
 <h1>
-<a id="demo" class="anchor" href="#demo" aria-hidden="true"><span class="octicon octicon-link"></span></a>Demo</h1>
+<a id="layer-properties" class="anchor" href="#layer-properties" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Layer properties</h1>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-c">//simple layer</span>
+layer <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">L.Marker</span>([<span class="pl-c1">0</span>, <span class="pl-c1">0</span>]);
+<span class="pl-smi">layer</span>.<span class="pl-smi">feature</span> <span class="pl-k">=</span> {
+  id<span class="pl-k">:</span> <span class="pl-c1">1</span>,
+  properties<span class="pl-k">:</span> {
+    a<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>a<span class="pl-pds">'</span></span>,
+    b<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>b<span class="pl-pds">'</span></span>
+  }
+};
+
+<span class="pl-c">//get value by key 'a'</span>
+<span class="pl-k">var</span> a <span class="pl-k">=</span> <span class="pl-smi">layer</span>.<span class="pl-en">getProperty</span>(<span class="pl-s"><span class="pl-pds">'</span>a<span class="pl-pds">'</span></span>);
+
+<span class="pl-c">//change values</span>
+<span class="pl-smi">layer</span>.<span class="pl-en">setProperties</span>({
+  a<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>b<span class="pl-pds">'</span></span>,
+  b<span class="pl-k">:</span><span class="pl-s"><span class="pl-pds">'</span>a<span class="pl-pds">'</span></span>
+});
+
+<span class="pl-c">//add new property</span>
+<span class="pl-smi">layer</span>.<span class="pl-en">setProperties</span>({
+  c<span class="pl-k">:</span><span class="pl-s"><span class="pl-pds">'</span>c<span class="pl-pds">'</span></span>
+});
+
+<span class="pl-c">//delete properties</span>
+<span class="pl-smi">layer</span>.<span class="pl-en">deleteProperties</span>([<span class="pl-s"><span class="pl-pds">'</span>a<span class="pl-pds">'</span></span>,<span class="pl-s"><span class="pl-pds">'</span>b<span class="pl-pds">'</span></span>,<span class="pl-s"><span class="pl-pds">'</span>c<span class="pl-pds">'</span></span>]);</pre></div>
+
+<h1>
+<a id="demo" class="anchor" href="#demo" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Demo</h1>
 
 <p>demos for GML read format</p>
 
@@ -208,8 +355,14 @@ map.on(<span class="pl-s"><span class="pl-pds">'</span>editable:editing<span cla
 <li><a href="http://flexberry.github.io/Leaflet-WFST/examples/polygonGeoJSON.html">Polygons</a></li>
 </ul>
 
+<p>demo filter bbox</p>
+
+<ul>
+<li><a href="http://flexberry.github.io/Leaflet-WFST/examples/filterBBox.html">BBox</a></li>
+</ul>
+
 <h1>
-<a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h1>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>License</h1>
 
 <p>MIT</p>
       </section>
