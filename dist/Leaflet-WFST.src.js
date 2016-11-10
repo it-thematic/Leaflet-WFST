@@ -1,29 +1,28 @@
-/*! Leaflet-WFST 1.0.0 2015-06-15 */
+/*! Leaflet-WFST 1.0.0 2016-11-10 */
 (function(window, document, undefined) {
 
 "use strict";
 
 L.XmlUtil = {
-  // comes from OL
   namespaces: {
-    xlink: "http://www.w3.org/1999/xlink",
-    xmlns: "http://www.w3.org/2000/xmlns/",
-    xsd: "http://www.w3.org/2001/XMLSchema",
-    xsi: "http://www.w3.org/2001/XMLSchema-instance",
-    wfs: "http://www.opengis.net/wfs",
-    gml: "http://www.opengis.net/gml",
-    ogc: "http://www.opengis.net/ogc",
-    ows: "http://www.opengis.net/ows"
+    xlink: 'http://www.w3.org/1999/xlink',
+    xmlns: 'http://www.w3.org/2000/xmlns/',
+    xsd: 'http://www.w3.org/2001/XMLSchema',
+    xsi: 'http://www.w3.org/2001/XMLSchema-instance',
+    wfs: 'http://www.opengis.net/wfs',
+    gml: 'http://www.opengis.net/gml',
+    ogc: 'http://www.opengis.net/ogc',
+    ows: 'http://www.opengis.net/ows'
   },
 
-  //TODO: есть ли нормальная реализация для создания нового документа с doctype text/xml?
+  // TODO: find another way to create a new document with doctype text/xml?
   xmldoc: (new DOMParser()).parseFromString('<root />', 'text/xml'),
 
   setAttributes: function (node, attributes) {
     for (var name in attributes) {
       if (attributes[name] != null && attributes[name].toString) {
         var value = attributes[name].toString();
-        var uri = this.namespaces[name.substring(0, name.indexOf(":"))] || null;
+        var uri = this.namespaces[name.substring(0, name.indexOf(':'))] || null;
         node.setAttributeNS(uri, name, value);
       }
     }
@@ -44,7 +43,7 @@ L.XmlUtil = {
     var uri = options.uri;
 
     if (!uri) {
-      uri = this.namespaces[name.substring(0, name.indexOf(":"))];
+      uri = this.namespaces[name.substring(0, name.indexOf(':'))];
     }
 
     if (!uri) {
@@ -69,7 +68,7 @@ L.XmlUtil = {
   },
 
   serializeXmlDocumentString: function (node) {
-    var doc = document.implementation.createDocument("", "", null);
+    var doc = document.implementation.createDocument('', '', null);
     doc.appendChild(node);
     var serializer = new XMLSerializer();
     return serializer.serializeToString(doc);
@@ -81,16 +80,58 @@ L.XmlUtil = {
   },
 
   parseXml: function (rawXml) {
-    if (typeof window.DOMParser !== "undefined") {
-      return ( new window.DOMParser() ).parseFromString(rawXml, "text/xml");
-    } else if (typeof window.ActiveXObject !== "undefined" && new window.ActiveXObject("Microsoft.XMLDOM")) {
-      var xmlDoc = new window.ActiveXObject("Microsoft.XMLDOM");
-      xmlDoc.async = "false";
+    if (typeof window.DOMParser !== 'undefined') {
+      return ( new window.DOMParser() ).parseFromString(rawXml, 'text/xml');
+    } else if (typeof window.ActiveXObject !== 'undefined' && new window.ActiveXObject('Microsoft.XMLDOM')) {
+      var xmlDoc = new window.ActiveXObject('Microsoft.XMLDOM');
+      xmlDoc.async = 'false';
       xmlDoc.loadXML(rawXml);
       return xmlDoc;
     } else {
-      throw new Error("No XML parser found");
+      throw new Error('No XML parser found');
     }
+  },
+
+  parseOwsExceptionReport: function(rawXml) {
+    var exceptionReportElement = L.XmlUtil.parseXml(rawXml).documentElement;
+    if (!exceptionReportElement || exceptionReportElement.tagName !== 'ows:ExceptionReport') {
+      return null;
+    }
+
+    var exceptionReport = {
+      exceptions: [],
+      message: ''
+    };
+
+    var exceptionsNodes = exceptionReportElement.getElementsByTagNameNS(L.XmlUtil.namespaces.ows, 'Exception');
+    for (var i = 0, exceptionsNodesCount = exceptionsNodes.length; i < exceptionsNodesCount; i++) {
+      var exceptionNode = exceptionsNodes[i];
+      var exceptionCode = exceptionNode.getAttribute('exceptionCode');
+      var exceptionsTextNodes = exceptionNode.getElementsByTagNameNS(L.XmlUtil.namespaces.ows, 'ExceptionText');
+      var exception = {
+        code: exceptionCode,
+        text: ''
+      };
+
+      for (var j = 0, textNodesCount = exceptionsTextNodes.length; j < textNodesCount; j++) {
+        var exceptionTextNode = exceptionsTextNodes[j];
+        var exceptionText = exceptionTextNode.innerHTML;
+
+        exception.text += exceptionText;
+        if (j < textNodesCount - 1) {
+          exception.text += '. ';
+        }
+      }
+
+      exceptionReport.message += exception.code + ' - ' + exception.text;
+      if (i < exceptionsNodesCount - 1) {
+        exceptionReport.message += ' ';
+      }
+
+      exceptionReport.exceptions.push(exception);
+    }
+
+    return exceptionReport;
   }
 };
 
@@ -164,15 +205,57 @@ L.Filter.GmlObjectID = L.Filter.extend({
   }
 });
 
+L.Filter.BBox = L.Filter.extend({
+  append: function(bbox, geometryField, crs) {
+    var bboxElement = L.XmlUtil.createElementNS('ogc:BBOX');
+    bboxElement.appendChild(L.XmlUtil.createElementNS('ogc:PropertyName', {}, { value: geometryField }));
+    bboxElement.appendChild(bbox.toGml(crs));
+
+    this.filter.appendChild(bboxElement);
+
+    return this; 
+  }
+});
+
+L.Filter.Intersects = L.Filter.extend({
+  append: function(geometryLayer, geometryField, crs) {
+    var intersectsElement = L.XmlUtil.createElementNS('ogc:Intersects');
+    intersectsElement.appendChild(L.XmlUtil.createElementNS('ogc:PropertyName', {}, { value: geometryField }));
+    intersectsElement.appendChild(geometryLayer.toGml(crs));
+
+    this.filter.appendChild(intersectsElement);
+
+    return this; 
+  }
+});
+
+L.Filter.EQ = L.Filter.extend({
+  append: function (name, val) {
+    var eqElement = L.XmlUtil.createElementNS('ogc:PropertyIsEqualTo');
+    var nameElement = L.XmlUtil.createElementNS('ogc:PropertyName', {}, {value: name});
+    var valueElement = L.XmlUtil.createElementNS('ogc:Literal', {}, {value: val});
+    eqElement.appendChild(nameElement);
+    eqElement.appendChild(valueElement);
+    this.filter.appendChild(eqElement);
+    return this;
+  }
+});
+
 L.Format = {};
 
 L.Format.Scheme = L.Class.extend({
-  initialize: function (geometryField) {
-    this.geometryField = geometryField;
+  options: {
+    geometryField: 'Shape',
+  },
+
+  initialize: function (options) {
+    L.setOptions(this, options);
   },
 
   parse: function (element) {
-    var featureType = new L.GML.FeatureType();
+    var featureType = new L.GML.FeatureType({
+      geometryField: this.options.geometryField
+    });
     var complexTypeDefinition = element.getElementsByTagNameNS(L.XmlUtil.namespaces.xsd, 'complexType')[0];
     var properties = complexTypeDefinition.getElementsByTagNameNS(L.XmlUtil.namespaces.xsd, 'sequence')[0];
     for (var i = 0; i < properties.childNodes.length; i++) {
@@ -187,7 +270,7 @@ L.Format.Scheme = L.Class.extend({
       }
 
       var propertyName = node.attributes.name.value;
-      if (propertyName === this.geometryField) {
+      if (propertyName === this.options.geometryField) {
         continue;
       }
 
@@ -247,7 +330,9 @@ L.Format.Base = L.Class.extend({
 
   setFeatureDescription: function (featureInfo) {
     this.namespaceUri = featureInfo.attributes.targetNamespace.value;
-    var schemeParser = new L.Format.Scheme(this.options.geometryField);
+    var schemeParser = new L.Format.Scheme({
+      geometryField: this.options.geometryField
+    });
     this.featureType = schemeParser.parse(featureInfo);
   }
 });
@@ -468,6 +553,38 @@ L.GML.LinearRing = L.GML.PointSequence.extend({
   }
 });
 
+L.GML.LineStringNode = L.GML.PointSequence.extend({
+  initialize: function () {
+    this.elementTag = 'gml:LineString';
+    L.GML.PointSequence.prototype.initialize.call(this);
+  },
+
+  parse: function (element) {
+    return L.GML.PointSequence.prototype.parse.call(this, element);
+  }
+});
+
+L.GML.PolygonNode = L.GML.Geometry.extend({
+
+  initialize: function () {
+    this.elementTag = 'gml:Polygon';
+    this.linearRingParser = new L.GML.LinearRing();
+  },
+
+  parse: function (element) {
+    var coords = [];
+    for (var i = 0; i < element.childNodes.length; i++) {
+      //there can be exterior and interior, by GML standard and for leaflet its not significant
+      var child = element.childNodes[i];
+      if (child.nodeType === document.ELEMENT_NODE) {
+        coords.push(this.linearRingParser.parse(child.firstChild));
+      }
+    }
+
+    return coords;
+  }
+});
+
 L.GML.CoordsToLatLngMixin = {
   transform: function (coordinates, options) {
     if (Array.isArray(coordinates[0])) {
@@ -494,54 +611,32 @@ L.GML.Point = L.GML.PointNode.extend({
   }
 });
 
-L.GML.LineString = L.GML.PointSequence.extend({
+L.GML.LineString = L.GML.LineStringNode.extend({
 
   includes: L.GML.CoordsToLatLngMixin,
-
-  initialize: function () {
-    this.elementTag = 'gml:LineString';
-    L.GML.PointSequence.prototype.initialize.call(this);
-  },
 
   parse: function (element, options) {
     var layer = new L.Polyline([]);
-    var coordinates = L.GML.PointSequence.prototype.parse.call(this, element);
-    var latLngs = this.transform(coordinates, options);
-    return layer.setLatLngs(latLngs);
+    var coordinates = L.GML.LineStringNode.prototype.parse.call(this, element);
+    layer.setLatLngs(this.transform(coordinates, options));
+    return layer;
   }
 });
 
-L.GML.Polygon = L.GML.Geometry.extend({
+L.GML.Polygon = L.GML.PolygonNode.extend({
+
   includes: L.GML.CoordsToLatLngMixin,
-
-  initialize: function () {
-    this.elementTag = 'gml:Polygon';
-    this.linearRingParser = new L.GML.LinearRing();
-  },
-
-  getCoordinates: function (element) {
-    var coords = [];
-    for (var i = 0; i < element.childNodes.length; i++) {
-      //there can be exterior and interior, by GML standard and for leaflet its not significant
-      var child = element.childNodes[i];
-      if (child.nodeType === document.ELEMENT_NODE) {
-        coords.push(this.linearRingParser.parse(child.firstChild));
-      }
-    }
-
-    return coords;
-  },
 
   parse: function (element, options) {
     var layer = new L.Polygon([]);
-    var coords = this.getCoordinates(element);
-    layer.setLatLngs(this.transform(coords, options));
+    var coordinates = L.GML.PolygonNode.prototype.parse.call(this, element);
+    layer.setLatLngs(this.transform(coordinates, options));
     return layer;
   }
 });
 
 L.GML.MultiGeometry = L.GML.Geometry.extend({
-  includes: L.GML.ParserContainerMixin,
+  includes: [L.GML.ParserContainerMixin, L.GML.CoordsToLatLngMixin],
 
   initialize: function () {
     this.initializeParserContainer();
@@ -561,31 +656,36 @@ L.GML.MultiGeometry = L.GML.Geometry.extend({
       }
     }
 
-    return childObjects;
+    return this.transform(childObjects, options);
   }
 });
 
 L.GML.AbstractMultiPolyline = L.GML.MultiGeometry.extend({
-  parse: function (element, options) {
-    var childLayers = L.GML.MultiGeometry.prototype.parse.call(this, element, options);
-    var layer = new L.MultiPolyline([]);
-    for (var i = 0; i < childLayers.length; i++) {
-      layer.addLayer(childLayers[i]);
-    }
 
+  initialize: function () {
+    L.GML.MultiGeometry.prototype.initialize.call(this);
+    this.appendParser(new L.GML.LineStringNode());
+  },
+
+  parse: function (element, options) {
+    var latLngs = L.GML.MultiGeometry.prototype.parse.call(this, element, options);
+    var layer = new L.Polyline([]);
+    layer.setLatLngs(latLngs);
     return layer;
   }
 });
 
 L.GML.AbstractMultiPolygon = L.GML.MultiGeometry.extend({
 
-  parse: function (element, options) {
-    var childLayers = L.GML.MultiGeometry.prototype.parse.call(this, element, options);
-    var layer = new L.MultiPolygon([]);
-    for (var i = 0; i < childLayers.length; i++) {
-      layer.addLayer(childLayers[i]);
-    }
+  initialize: function () {
+    L.GML.MultiGeometry.prototype.initialize.call(this);
+    this.appendParser(new L.GML.PolygonNode());
+  },
 
+  parse: function (element, options) {
+    var latLngs = L.GML.MultiGeometry.prototype.parse.call(this, element, options);
+    var layer = new L.Polygon([]);
+    layer.setLatLngs(latLngs);
     return layer;
   }
 });
@@ -593,7 +693,6 @@ L.GML.AbstractMultiPolygon = L.GML.MultiGeometry.extend({
 L.GML.MultiLineString = L.GML.AbstractMultiPolyline.extend({
   initialize: function () {
     L.GML.AbstractMultiPolyline.prototype.initialize.call(this);
-    this.appendParser(new L.GML.LineString());
     this.elementTag = 'gml:MultiLineString';
   }
 });
@@ -602,7 +701,6 @@ L.GML.MultiCurve = L.GML.AbstractMultiPolyline.extend({
   initialize: function () {
     L.GML.AbstractMultiPolyline.prototype.initialize.call(this);
     this.elementTag = 'gml:MultiCurve';
-    this.appendParser(new L.GML.LineString());
   }
 });
 
@@ -610,7 +708,6 @@ L.GML.MultiPolygon = L.GML.AbstractMultiPolygon.extend({
   initialize: function () {
     L.GML.AbstractMultiPolygon.prototype.initialize.call(this);
     this.elementTag = 'gml:MultiPolygon';
-    this.appendParser(new L.GML.Polygon());
   }
 });
 
@@ -618,7 +715,6 @@ L.GML.MultiSurface = L.GML.AbstractMultiPolygon.extend({
   initialize: function () {
     L.GML.AbstractMultiPolygon.prototype.initialize.call(this);
     this.elementTag = 'gml:MultiSurface';
-    this.appendParser(new L.GML.Polygon());
   }
 });
 
@@ -626,16 +722,26 @@ L.GML.MultiPoint = L.GML.MultiGeometry.extend({
   initialize: function () {
     L.GML.MultiGeometry.prototype.initialize.call(this);
     this.elementTag = 'gml:MultiPoint';
-    this.appendParser(new L.GML.Point());
+    this.appendParser(new L.GML.PointNode());
   },
 
   parse: function (element, options) {
-    var layers = L.GML.MultiGeometry.prototype.parse.call(this, element, options);
-    return new L.FeatureGroup(layers);
+    var coordinates = L.GML.MultiGeometry.prototype.parse.call(this, element, options);
+    var multiPoint = new L.FeatureGroup();
+    for (var i = 0; i < coordinates.length; i++) {
+      var point = new L.Marker();
+      point.setLatLng(coordinates[i]);
+      multiPoint.addLayer(point);
+    }
+
+    return multiPoint;
   }
 });
 
 L.GML.FeatureType = L.Class.extend({
+  options: {
+    geometryField: 'Shape',
+  },
 
   primitives: [
     {
@@ -664,7 +770,9 @@ L.GML.FeatureType = L.Class.extend({
     }
   ],
 
-  initialize: function () {
+  initialize: function (options) {
+    L.setOptions(this, options);
+
     this.fields = {};
   },
 
@@ -681,17 +789,26 @@ L.GML.FeatureType = L.Class.extend({
     var properties = {};
     for (var i = 0; i < feature.childNodes.length; i++) {
       var node = feature.childNodes[i];
-      if (node.nodeType !== document.ELEMENT_NODE) continue;
+      if (node.nodeType !== document.ELEMENT_NODE) {
+        continue;
+      }
 
       var propertyName = node.tagName.split(':').pop();
-      var fieldParser = this.fields[propertyName];
+      if (propertyName === this.options.geometryField) {
+        continue;
+      }
 
-      if (!fieldParser) continue;
+      var parseField = this.fields[propertyName];
+      if (!parseField) {
+        this.appendField(propertyName, "string");
+        parseField = this.fields[propertyName];
+      }
 
-      properties[propertyName] = fieldParser(node.textContent);
+      properties[propertyName] = parseField(node.textContent);
     }
 
     return {
+      type: 'Feature',
       properties: properties,
       id: feature.attributes['gml:id'].value
     };
@@ -748,6 +865,15 @@ L.Format.GML = L.Format.Base.extend({
 
   generateLayer: function (feature) {
     var geometryField = feature.getElementsByTagNameNS(this.namespaceUri, this.options.geometryField)[0];
+    if (!geometryField) {
+      throw new Error(
+        'Geometry field \'' +
+        this.options.geometryField +
+        '\' doesn\' exist inside received feature: \'' +
+        feature.innerHTML +
+        '\'');
+    }
+
     return this.parseElement(geometryField.firstChild, this.options);
   }
 });
@@ -756,7 +882,7 @@ L.Util.project = function (crs, latlngs) {
   if (L.Util.isArray(latlngs)) {
     var result = [];
     latlngs.forEach(function (latlng) {
-      result.push(crs.projection.project(latlng));
+      result.push(L.Util.project(crs, latlng));
     });
 
     return result;
@@ -786,6 +912,17 @@ L.GMLUtil = {
   }
 };
 
+L.LatLngBounds.prototype.toGml = function (crs) {
+  var projectedSW = crs.project(this.getSouthWest());
+  var projectedNE = crs.project(this.getNorthEast());
+
+  var envelopeElement = L.XmlUtil.createElementNS('gml:Envelope', { srsName: crs.code });
+  envelopeElement.appendChild(L.XmlUtil.createElementNS('gml:lowerCorner', {}, { value: projectedSW.x + ' ' + projectedSW.y }));
+  envelopeElement.appendChild(L.XmlUtil.createElementNS('gml:upperCorner', {}, { value: projectedNE.x + ' ' + projectedNE.y }));
+
+  return envelopeElement;
+};
+
 L.Marker.include({
   toGml: function (crs) {
     var node = L.XmlUtil.createElementNS('gml:Point', {srsName: crs.code});
@@ -794,56 +931,86 @@ L.Marker.include({
   }
 });
 
-L.MultiPolygon.include({
-  toGml: function (crs) {
-    var node = L.XmlUtil.createElementNS('gml:MultiPolygon', {srsName: crs.code, srsDimension: 2});
-    var collection = node.appendChild(L.XmlUtil.createElementNS('gml:polygonMembers'));
-    this.eachLayer(function (polygon) {
-      collection.appendChild(polygon.toGml(crs));
-    });
-
-    return node;
-  }
-});
-
-L.MultiPolyline.include({
-  toGml: function (crs) {
-    var node = L.XmlUtil.createElementNS('gml:MultiLineString', {srsName: crs.code, srsDimension: 2});
-    var collection = node.appendChild(L.XmlUtil.createElementNS('gml:lineStringMembers'));
-    this.eachLayer(function (polyline) {
-      collection.appendChild(polyline.toGml(crs));
-    });
-
-    return node;
-  }
-});
-
 L.Polygon.include({
   toGml: function (crs) {
-    var node = L.XmlUtil.createElementNS('gml:Polygon', {srsName: crs.code, srsDimension: 2});
-    node.appendChild(L.XmlUtil.createElementNS('gml:exterior'))
-      .appendChild(L.XmlUtil.createElementNS('gml:LinearRing', {srsDimension: 2}))
-      .appendChild(L.GMLUtil.posListNode(L.Util.project(crs, this.getLatLngs()), true));
+    var polygons = this.getLatLngs();
+    var gmlPolygons = [];
 
-    if (this._holes && this._holes.length) {
-      for (var hole in this._holes) {
-        node.appendChild(L.XmlUtil.createElementNS('gml:interior'))
-          .appendChild(L.XmlUtil.createElementNS('gml:LinearRing', {srsDimension: 2}))
-          .appendChild(L.GMLUtil.posListNode(L.Util.project(crs, this._holes[hole]), true));
+    for (var i = 0; i < polygons.length; i++) {
+      var polygonCoordinates = polygons[i];
+      var flat = L.Polyline._flat(polygonCoordinates);
+      var node = L.XmlUtil.createElementNS('gml:Polygon', {srsName: crs.code, srsDimension: 2});
+      node.appendChild(L.XmlUtil.createElementNS('gml:exterior'))
+        .appendChild(L.XmlUtil.createElementNS('gml:LinearRing', {srsDimension: 2}))
+        .appendChild(L.GMLUtil.posListNode(L.Util.project(crs, flat ? polygonCoordinates : polygonCoordinates[0]), true));
+
+      if (!flat) {
+        for (var hole = 1; hole < polygonCoordinates.length; hole++) {
+          node.appendChild(L.XmlUtil.createElementNS('gml:interior'))
+            .appendChild(L.XmlUtil.createElementNS('gml:LinearRing', {srsDimension: 2}))
+            .appendChild(L.GMLUtil.posListNode(L.Util.project(crs, polygonCoordinates[hole]), true));
+        }
       }
+
+      gmlPolygons.push(node);
     }
 
-    return node;
+    if (gmlPolygons.length === 1) return gmlPolygons[0];
+
+    // else make multipolygon
+    var multi = L.XmlUtil.createElementNS('gml:MultiPolygon', {srsName: crs.code, srsDimension: 2});
+    var collection = multi.appendChild(L.XmlUtil.createElementNS('gml:polygonMembers'));
+    for (var p = 0; p < gmlPolygons.length; p++) {
+      collection.appendChild(gmlPolygons[p]);
+    }
+
+    return multi;
   }
 });
 
 L.Polyline.include({
-  toGml: function (crs) {
+  _lineStringNode: function (crs, latlngs) {
     var node = L.XmlUtil.createElementNS('gml:LineString', {srsName: crs.code, srsDimension: 2});
-    node.appendChild(L.GMLUtil.posListNode(L.Util.project(crs, this.getLatLngs()), false));
+    node.appendChild(L.GMLUtil.posListNode(L.Util.project(crs, latlngs), false));
     return node;
+  },
+
+  toGml: function (crs) {
+    var latLngs = this.getLatLngs();
+    if (L.Polyline._flat(latLngs)) return this._lineStringNode(crs, latLngs);
+
+    //we have multiline
+    var multi = L.XmlUtil.createElementNS('gml:MultiLineString', {srsName: crs.code, srsDimension: 2});
+    var collection = multi.appendChild(L.XmlUtil.createElementNS('gml:lineStringMembers'));
+    for (var i = 0; i < latLngs.length; i++) {
+      collection.appendChild(this._lineStringNode(crs, latLngs[i]));
+    }
+
+    return multi;
   }
 });
+
+var PropertiesMixin = {
+  setProperties: function (obj) {
+    for (var i in obj) {
+      if (obj.hasOwnProperty(i)) {
+        this.feature.properties[i] = obj[i];
+      }
+    }
+  },
+  getProperty: function (field) {
+    return this.feature.properties[field];
+  },
+  deleteProperties: function (arr) {
+    for (var i = 0; i < arr.length; i++) {
+      if (this.feature.properties.hasOwnProperty(arr[i])) {
+        delete this.feature.properties[arr[i]];
+      }
+    }
+  }
+};
+L.Marker.include(PropertiesMixin);
+L.Path.include(PropertiesMixin);
 
 L.WFS = L.FeatureGroup.extend({
 
@@ -856,6 +1023,8 @@ L.WFS = L.FeatureGroup.extend({
     typeNS: '',
     typeName: '',
     typeNSName: '',
+    maxFeatures: null,
+    filter: null,
     style: {
       color: 'black',
       weight: 1
@@ -883,8 +1052,12 @@ L.WFS = L.FeatureGroup.extend({
     var that = this;
     this.describeFeatureType(function () {
       if (that.options.showExisting) {
-        that.loadFeatures();
+        that.loadFeatures(that.options.filter);
       }
+    }, function(errorMessage) {
+      that.fire('error', {
+        error: new Error(errorMessage)
+      });
     });
   },
 
@@ -892,7 +1065,7 @@ L.WFS = L.FeatureGroup.extend({
     return this.options.typeNS + ':' + name;
   },
 
-  describeFeatureType: function (callback) {
+  describeFeatureType: function (successCallback, errorCallback) {
     var requestData = L.XmlUtil.createElementNS('wfs:DescribeFeatureType', {
       service: 'WFS',
       version: this.options.version
@@ -904,12 +1077,28 @@ L.WFS = L.FeatureGroup.extend({
       url: this.options.url,
       data: L.XmlUtil.serializeXmlDocumentString(requestData),
       success: function (data) {
+        // If some exception occur, WFS-service can response successfully, but with ExceptionReport,
+        // and such situation must be handled.
+        var exceptionReport = L.XmlUtil.parseOwsExceptionReport(data);
+        if (exceptionReport) {
+          if (typeof(errorCallback) === 'function') {
+            errorCallback(exceptionReport.message);
+          }
+
+          return;
+        }
+
         var xmldoc = L.XmlUtil.parseXml(data);
         var featureInfo = xmldoc.documentElement;
         that.readFormat.setFeatureDescription(featureInfo);
         that.options.namespaceUri = featureInfo.attributes.targetNamespace.value;
-        if (typeof(callback) === 'function') {
-          callback();
+        if (typeof(successCallback) === 'function') {
+          successCallback();
+        }
+      },
+      error: function(errorMessage) {
+        if (typeof(errorCallback) === 'function') {
+          errorCallback(errorMessage);
         }
       }
     });
@@ -920,6 +1109,7 @@ L.WFS = L.FeatureGroup.extend({
       {
         service: 'WFS',
         version: this.options.version,
+        maxFeatures: this.options.maxFeatures,
         outputFormat: this.readFormat.outputFormat
       });
 
@@ -941,19 +1131,40 @@ L.WFS = L.FeatureGroup.extend({
     L.Util.request({
       url: this.options.url,
       data: L.XmlUtil.serializeXmlDocumentString(that.getFeature(filter)),
-      success: function (data) {
-        var layers = that.readFormat.responseToLayers(data,
-          {
-            coordsToLatLng: that.options.coordsToLatLng,
-            pointToLayer: that.options.pointToLayer
+      success: function (responseText) {
+        // If some exception occur, WFS-service can response successfully, but with ExceptionReport,
+        // and such situation must be handled.
+        var exceptionReport = L.XmlUtil.parseOwsExceptionReport(responseText);
+        if (exceptionReport) {
+          that.fire('error', {
+            error: new Error(exceptionReport.message)
           });
+
+          return that;
+        }
+
+        // Request was truly successful (without exception report),
+        // so convert response to layers.
+        var layers = that.readFormat.responseToLayers(responseText, {
+          coordsToLatLng: that.options.coordsToLatLng,
+          pointToLayer: that.options.pointToLayer
+        });
         layers.forEach(function (element) {
           element.state = that.state.exist;
           that.addLayer(element);
         });
 
         that.setStyle(that.options.style);
-        that.fire('load');
+        that.fire('load', {
+          responseText: responseText
+        });
+
+        return that;
+      },
+      error: function(errorMessage) {
+        that.fire('error', {
+          error: new Error(errorMessage)
+        });
 
         return that;
       }
@@ -1069,7 +1280,7 @@ L.WFST = L.WFS.extend({
 
 L.wfst = function (options, readFormat) {
   return new L.WFST(options, readFormat);
-}
+};
 
 L.WFST.include({
   gmlFeature: function (layer) {
