@@ -100,7 +100,7 @@ L.XmlUtil = {
 
   parseOwsExceptionReport: function(rawXml) {
     var exceptionReportElement = L.XmlUtil.parseXml(rawXml).documentElement;
-    if (!exceptionReportElement || exceptionReportElement.tagName !== 'ows:ExceptionReport') {
+    if (!exceptionReportElement || (exceptionReportElement.tagName !== 'ows:ExceptionReport' && exceptionReportElement.tagName !== 'ExceptionReport')) {
       return null;
     }
 
@@ -121,7 +121,7 @@ L.XmlUtil = {
 
       for (var j = 0, textNodesCount = exceptionsTextNodes.length; j < textNodesCount; j++) {
         var exceptionTextNode = exceptionsTextNodes[j];
-        var exceptionText = exceptionTextNode.innerText || exceptionTextNode.textContent || exceptionTextNode.text;
+        var exceptionText = exceptionTextNode.innerHTML;
 
         exception.text += exceptionText;
         if (j < textNodesCount - 1) {
@@ -219,7 +219,7 @@ L.Filter.BBox = L.Filter.extend({
 
     this.filter.appendChild(bboxElement);
 
-    return this; 
+    return this;
   }
 });
 
@@ -231,7 +231,7 @@ L.Filter.Intersects = L.Filter.extend({
 
     this.filter.appendChild(intersectsElement);
 
-    return this; 
+    return this;
   }
 });
 
@@ -335,7 +335,10 @@ L.Format.Base = L.Class.extend({
   },
 
   setFeatureDescription: function (featureInfo) {
-    this.namespaceUri = featureInfo.attributes.targetNamespace.value;
+    this.namespaceUri = "";
+    if (featureInfo.attributes.targetNamespace) {
+      this.namespaceUri = featureInfo.attributes.targetNamespace.value;
+    }
     var schemeParser = new L.Format.Scheme({
       geometryField: this.options.geometryField
     });
@@ -368,7 +371,7 @@ L.Format.GeoJSON = L.Format.Base.extend({
   },
 
   generateLayer: function (feature) {
-    return L.GeoJSON.geometryToLayer(feature, this.options || null, this.options.coordsToLatLng || null, null);
+    return L.GeoJSON.geometryToLayer(feature, this.options || null);
   }
 });
 
@@ -511,7 +514,7 @@ L.GML.PointNode = L.GML.Geometry.extend({
   },
 
   parse: function (element) {
-    return this.parseElement(element.firstChild, {dimensions: this.dimensions(element)});
+    return this.parseElement(element.firstElementChild, {dimensions: this.dimensions(element)});
   }
 });
 
@@ -527,7 +530,7 @@ L.GML.PointSequence = L.GML.Geometry.extend({
   },
 
   parse: function (element) {
-    var firstChild = element.firstChild;
+    var firstChild = element.firstElementChild;
     var coords = [];
     var tagName = firstChild.tagName;
     if (tagName === 'gml:pos' || tagName === 'gml:Point') {
@@ -845,7 +848,7 @@ L.Format.GML = L.Format.Base.extend({
     var featureCollection = xmlDoc.documentElement;
     var featureMemberNodes = featureCollection.getElementsByTagNameNS(L.XmlUtil.namespaces.gml, 'featureMember');
     for (var i = 0; i < featureMemberNodes.length; i++) {
-      var feature = featureMemberNodes[i].firstChild;
+      var feature = featureMemberNodes[i].firstElementChild;
       layers.push(this.processFeature(feature));
     }
 
@@ -870,7 +873,7 @@ L.Format.GML = L.Format.Base.extend({
   },
 
   generateLayer: function (feature) {
-    var geometryField = feature.getElementsByTagNameNS(this.namespaceUri, this.options.geometryField)[0];
+    var geometryField = feature.getElementsByTagNameNS('*', this.options.geometryField)[0];
     if (!geometryField) {
       throw new Error(
         'Geometry field \'' +
@@ -949,6 +952,15 @@ L.Polygon.include({
   toGml: function (crs) {
     var polygons = this.getLatLngs();
     var gmlPolygons = [];
+
+    var isSinglePolygon = false;
+    for (var i = 0; i < polygons.length; i++) {
+      isSinglePolygon = L.Polyline._flat(polygons[i]);
+    }
+
+    if (isSinglePolygon) {
+      polygons = [polygons]
+    }
 
     for (var i = 0; i < polygons.length; i++) {
       var polygonCoordinates = polygons[i];
@@ -1076,7 +1088,8 @@ L.WFS = L.FeatureGroup.extend({
   },
 
   namespaceName: function (name) {
-    return this.options.typeNS + ':' + name;
+    if (this.options.typeNS != '') {return this.options.typeNS + ':' + name;}
+    else {return name}
   },
 
   describeFeatureType: function (successCallback, errorCallback) {
@@ -1106,7 +1119,9 @@ L.WFS = L.FeatureGroup.extend({
         var xmldoc = L.XmlUtil.parseXml(data);
         var featureInfo = xmldoc.documentElement;
         that.readFormat.setFeatureDescription(featureInfo);
-        that.options.namespaceUri = featureInfo.attributes.targetNamespace.value;
+        if (featureInfo.attributes.targetNamespace) {
+          that.options.namespaceUri = featureInfo.attributes.targetNamespace.value;
+        }
         if (typeof(successCallback) === 'function') {
           successCallback();
         }
@@ -1141,7 +1156,7 @@ L.WFS = L.FeatureGroup.extend({
     return request;
   },
 
-  loadFeatures: function (filter) {
+  requestFeatures: function (filter,successCallback) {
     var that = this;
     L.Util.request({
       url: this.options.url,
@@ -1161,32 +1176,7 @@ L.WFS = L.FeatureGroup.extend({
 
         // Request was truly successful (without exception report),
         // so convert response to layers.
-        var layers = that.readFormat.responseToLayers(responseText, {
-          coordsToLatLng: that.options.coordsToLatLng,
-          pointToLayer: that.options.pointToLayer
-        });
-
-        if (typeof that.options.style === "function") {
-          layers.forEach(function (element) {
-            element.state = that.state.exist;
-            if (element.setStyle) {
-              element.setStyle(that.options.style(element));
-        		}
-            that.addLayer(element);
-          });
-        } else {
-          layers.forEach(function (element) {
-            element.state = that.state.exist;
-            that.addLayer(element);
-          });
-          that.setStyle(that.options.style);
-        }
-
-        that.fire('load', {
-          responseText: responseText
-        });
-
-        return that;
+        successCallback(responseText);
       },
       error: function(errorMessage) {
         that.fire('error', {
@@ -1194,7 +1184,35 @@ L.WFS = L.FeatureGroup.extend({
         });
 
         return that;
+      },
+      step: function () {
+          if (typeof(that.options.step) === 'function') {
+            that.options.step();
+          }
+      },
+      complete: function () {
+          if (typeof(that.options.complete) === 'function') {
+            that.options.complete();
+          }
       }
+    });
+  },
+
+  loadFeatures: function (filter) {
+    var that = this;
+    this.requestFeatures(filter,function(rt) {
+      var layers = that.readFormat.responseToLayers(rt, {
+        coordsToLatLng: that.options.coordsToLatLng,
+        pointToLayer: that.options.pointToLayer
+      });
+      layers.forEach(function (element) {
+        element.state = that.state.exist;
+        that.addLayer(element);
+      });
+      that.setStyle(that.options.style);
+      that.fire('load', {
+        responseText: rt
+      });
     });
   }
 });
@@ -1259,7 +1277,20 @@ L.WFST = L.WFS.extend({
     return this;
   },
 
-  save: function () {
+  cancelLayer: function(layer) {
+    L.FeatureGroup.prototype.removeLayer.call(this, layer);
+    var id = this.getLayerId(layer);
+    if (id in this.changes) {
+      delete this.changes[id];
+    }
+  },
+
+  clearLayers: function(){
+    L.FeatureGroup.prototype.clearLayers.call(this);
+    this.changes = {};
+  },
+
+  save: function (reload) {
     var transaction = L.XmlUtil.createElementNS('wfs:Transaction', {service: 'WFS', version: this.options.version});
 
     var inserted = [];
@@ -1293,12 +1324,17 @@ L.WFST = L.WFS.extend({
           L.FeatureGroup.prototype.removeLayer.call(that, layer);
         });
 
-        that.once('load', function () {
-          that.fire('save:success');
+        if (!reload) {
           that.changes = {};
-        });
+          that.fire(that.fire('save:success'))
+        } else {
+          that.once('load', function () {
+            that.fire('save:success');
+            that.changes = {};
+          });
 
-        that.loadFeatures(filter);
+          that.loadFeatures(filter);
+        }
       }
     });
 
