@@ -2,7 +2,7 @@
 <html>
 <head lang="en">
   <meta charset="UTF-8">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.1/leaflet.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.css"/>
   <title></title>
   <style>
     html, body, #map {
@@ -14,8 +14,8 @@
 </head>
 <body>
 <div id="map"></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.1/leaflet.js"></script>
-<script src="../dist/Leaflet-WFST.src.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.js"></script>
+<script src="../dist/leaflet-wfst.src.js"></script>
 <script>
   var map = L.map('map').setView([0, 0], 2);
 
@@ -25,23 +25,24 @@
   }).addTo(map);
 
   var boundaries = new L.WFS({
-    url: 'http://demo.opengeo.org/geoserver/ows',
+    url: 'http://geoserver.ics.perm.ru/geoserver/ows',
     typeNS: 'topp',
     typeName: 'tasmania_state_boundaries',
     crs: L.CRS.EPSG4326,
     geometryField: 'the_geom',
     style: {
       color: 'blue',
+      fillColor: 'transparent',
       weight: 2
     }
   }, new L.Format.GeoJSON({crs: L.CRS.EPSG4326}))
     .addTo(map)
     .once('load', function () {
-      map.fitBounds(boundaries);
+      map.fitBounds(boundaries.getBounds());
     });
 
   var roads = new L.WFS({
-    url: 'http://demo.opengeo.org/geoserver/ows',
+    url: 'http://geoserver.ics.perm.ru/geoserver/ows',
     typeNS: 'topp',
     typeName: 'tasmania_roads',
     crs: L.CRS.EPSG4326,
@@ -53,7 +54,7 @@
   }).addTo(map);
 
   var cities = new L.WFS({
-    url: 'http://demo.opengeo.org/geoserver/ows',
+    url: 'http://geoserver.ics.perm.ru/geoserver/ows',
     typeNS: 'topp',
     typeName: 'tasmania_cities',
     crs: L.CRS.EPSG4326,

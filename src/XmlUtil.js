@@ -23,9 +23,12 @@ L.XmlUtil = {
     }
   },
 
-  evaluate: function (xpath, rawxml) {
-    var parser = new DOMParser();
-    var xmlDoc = parser.parseFromString(rawxml, 'text/xml');
+  evaluate: function (xpath, xml) {
+    var xmlDoc = xml;
+    if (!(xmlDoc instanceof Document)) {
+      xmlDoc = this.parseXml(xml);
+    }
+
     var xpe = new XPathEvaluator();
     var nsResolver = xpe.createNSResolver(xmlDoc.documentElement);
 
@@ -59,13 +62,21 @@ L.XmlUtil = {
   },
 
   createTextNode: function (value) {
-    if (value ||
-      value === 0) {
-
-      return this.xmldoc.createTextNode(value);
+    if(value === null || value === undefined) {
+      value = '';
+    } else if(value instanceof Date) {
+      value = value.toISOString();
     }
 
-    return this.xmldoc.createTextNode('');
+    return this.xmldoc.createTextNode(value);
+  },
+
+  getNodeText: function (node) {
+    if (!node) {
+      return '';
+    }
+
+    return node.innerText || node.textContent || node.text;
   },
 
   serializeXmlDocumentString: function (node) {
@@ -82,7 +93,7 @@ L.XmlUtil = {
 
   parseXml: function (rawXml) {
     if (typeof window.DOMParser !== 'undefined') {
-      return ( new window.DOMParser() ).parseFromString(rawXml, 'text/xml');
+      return (new window.DOMParser()).parseFromString(rawXml, 'text/xml');
     } else if (typeof window.ActiveXObject !== 'undefined' && new window.ActiveXObject('Microsoft.XMLDOM')) {
       var xmlDoc = new window.ActiveXObject('Microsoft.XMLDOM');
       xmlDoc.async = 'false';
@@ -93,8 +104,13 @@ L.XmlUtil = {
     }
   },
 
-  parseOwsExceptionReport: function(rawXml) {
-    var exceptionReportElement = L.XmlUtil.parseXml(rawXml).documentElement;
+  parseOwsExceptionReport: function (xml) {
+    var xmlDoc = xml;
+    if (!(xmlDoc instanceof Document)) {
+      xmlDoc = this.parseXml(xml);
+    }
+
+    var exceptionReportElement = xmlDoc.documentElement;
     if (!exceptionReportElement || exceptionReportElement.tagName !== 'ows:ExceptionReport') {
       return null;
     }

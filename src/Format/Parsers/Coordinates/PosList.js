@@ -3,13 +3,16 @@
  */
 
 L.GML.PosList = L.GML.Element.extend({
-  initialize: function () {
-    this.elementTag = 'gml:posList';
+  statics: {
+    DIM: 2
   },
+
+  elementTag: 'gml:posList',
 
   parse: function (element, options) {
     var result = [];
-    var dim = options.dimensions;
+    options = options || {};
+    var dim = options.dimension || L.GML.PosList.DIM;
     var coords = element.textContent.split(' ');
     for (var i = 0; i < coords.length; i += dim) {
       var coord = [];

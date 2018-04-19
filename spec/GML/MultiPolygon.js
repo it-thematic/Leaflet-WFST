@@ -27,24 +27,24 @@ describe("L.MultiPolygon.toGml()", function () {
     ]);
 
     multiGml = multi.toGml(L.CRS.Simple);
-    members = multiGml.firstChild;
+    members = multiGml.firstElementChild;
   });
 
-  it('should return Element object with tagName gml:MultiPolygon', function () {
+  it('should return Element object with tagName gml:MultiSurface', function () {
     expect(multiGml).to.be.instanceOf(Element);
-    expect(multiGml.tagName).to.be.equal('gml:MultiPolygon');
+    expect(multiGml.tagName).to.be.equal('gml:MultiSurface');
   });
 
-  it('should have first child element gml:polygonMembers', function () {
-    expect(members.tagName).to.be.equal('gml:polygonMembers');
+  it('should have first child element gml:surfaceMembers', function () {
+    expect(members.tagName).to.be.equal('gml:surfaceMembers');
   });
 
   it('should have 3 child nodes of members', function () {
-    expect(members.childNodes.length).to.be.equal(3);
+    expect(members.children.length).to.be.equal(3);
   });
 
   it('all child elements of members shoud be a gml:Polygon', function () {
-    var childs = members.childNodes;
+    var childs = members.children;
     for (var i = 0; i < childs; i++) {
       expect(childs[i].tagName).to.be.equal('gml:Polygon');
     }

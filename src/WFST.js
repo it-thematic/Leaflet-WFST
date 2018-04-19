@@ -1,14 +1,14 @@
-/**
- * Created by PRadostev on 06.02.2015.
- */
-
 L.WFST = L.WFS.extend({
+  options: {
+    forceMulti: false
+  },
+
   initialize: function (options, readFormat) {
     L.WFS.prototype.initialize.call(this, options, readFormat);
     this.state = L.extend(this.state, {
-      insert: 'insert',
-      update: 'update',
-      remove: 'remove'
+      insert: 'insertElement',
+      update: 'updateElement',
+      remove: 'removeElement'
     });
 
     this.changes = {};
@@ -17,7 +17,7 @@ L.WFST = L.WFS.extend({
   addLayer: function (layer) {
     L.FeatureGroup.prototype.addLayer.call(this, layer);
     if (!layer.feature) {
-      layer.feature = {properties: {}};
+      layer.feature = { properties: {} };
     }
 
     if (!layer.state) {
@@ -59,7 +59,7 @@ L.WFST = L.WFS.extend({
   },
 
   save: function () {
-    var transaction = L.XmlUtil.createElementNS('wfs:Transaction', {service: 'WFS', version: this.options.version});
+    var transaction = L.XmlUtil.createElementNS('wfs:Transaction', { service: 'WFS', version: this.options.version });
 
     var inserted = [];
 
@@ -79,12 +79,20 @@ L.WFST = L.WFS.extend({
       url: this.options.url,
       data: L.XmlUtil.serializeXmlDocumentString(transaction),
       headers: this.options.headers || {},
+      withCredentials: true,
       success: function (data) {
-        var insertResult = L.XmlUtil.evaluate('//wfs:InsertResults/wfs:Feature/ogc:FeatureId/@fid', data);
-        var filter = new L.Filter.GmlObjectID();
+        var xmlDoc = L.XmlUtil.parseXml(data);
+        var exception = L.XmlUtil.parseOwsExceptionReport(xmlDoc);
+        if(exception !== null) {
+          that.fire('save:failed', exception);
+          return;
+        }
+
+        var insertResult = L.XmlUtil.evaluate('//wfs:InsertResults/wfs:Feature/ogc:FeatureId/@fid', xmlDoc);
+        var insertedIds = [];
         var id = insertResult.iterateNext();
         while (id) {
-          filter.append(id.value);
+          insertedIds.push(new L.Filter.GmlObjectID(id.value));
           id = insertResult.iterateNext();
         }
 
@@ -97,7 +105,10 @@ L.WFST = L.WFS.extend({
           that.changes = {};
         });
 
-        that.loadFeatures(filter);
+        that.loadFeatures(insertedIds);
+      },
+      error: function (data) {
+        that.fire('save:failed', data);
       }
     });
 
