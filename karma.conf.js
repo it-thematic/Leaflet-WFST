@@ -1,6 +1,4 @@
 // Karma configuration
-// Generated on Tue Feb 17 2015 12:06:40 GMT+0500 (RTZ 4 (зима))
-
 module.exports = function (config) {
   config.set({
 
@@ -16,10 +14,10 @@ module.exports = function (config) {
     // list of files / patterns to load in the browser
     files: [
       'bower_components/leaflet/dist/leaflet.js',
-      'dist/Leaflet-WFST.src.js',
+      'dist/leaflet-wfst.src.js',
       'spec/**/*.js',
-      {pattern: 'spec/Format/*.xml', autoWatch: true, included: false, served: true},
-      {pattern: 'spec/Format/*.json', autoWatch: true, included: false, served: true}
+      { pattern: 'spec/Format/*.xml', autoWatch: true, included: false, served: true },
+      { pattern: 'spec/Format/*.json', autoWatch: true, included: false, served: true }
     ],
 
 
@@ -57,19 +55,16 @@ module.exports = function (config) {
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    browsers: ['PhantomJS', 'Chrome', 'Firefox'],
+    browsers: ['Chrome_headless'],
 
     customLaunchers: {
-      'PhantomJS_debug': {
-        base: 'PhantomJS',
-        options: {
-          windowName: 'my-window',
-          settings: {
-            webSecurityEnabled: false
-          }
-        },
-        flags: ['--load-images=true'],
-        debug: true
+      Chrome_headless: {
+        base: 'Chrome',
+        flags: [
+          '--headless',
+          '--disable-gpu',
+          '--remote-debugging-port=9222'
+        ]
       }
     },
 
